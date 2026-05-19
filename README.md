@@ -2,7 +2,7 @@
 
 An interactive, responsive educational web application designed to help engineering students and electrical enthusiasts understand the core concepts, derivations, and mathematical relationships of 3-Phase Star (Y) and Delta (Δ) connections.
 
-🌐 **[Live Demo Link](https://yourusername.github.io/three-phase-star-delta-visualizer/)** ---
+🌐 **[Live Demo Link]( https://shivamgohel2008.github.io/three-phase-star-delta-visualizer/)** ---
 
 ## ✨ Features
 
