@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star & Delta Connections</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050b14;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --star-color: #0ea5e9;
+            --delta-color: #f97316;
+            --calc-color: #10b981;
+            --comp-color: #8b5cf6;
+            --glass-bg: rgba(15, 23, 42, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-hover: rgba(30, 41, 59, 0.8);
+            --blur: blur(20px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 15% 10%, rgba(14, 165, 233, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+            line-height: 1.6;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        header h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, var(--star-color), var(--delta-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            line-height: 1.1;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: clamp(1.1rem, 2vw, 1.3rem);
+            letter-spacing: 1px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            position: sticky;
+            top: 1rem;
+            z-index: 100;
+            padding: 0.5rem;
+            border-radius: 100px;
+        }
+
+        .tab-btn {
+            background: var(--glass-bg);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0.8rem 1.8rem;
+            border-radius: 99px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-btn:hover {
+            background: var(--glass-hover);
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active[data-tab="star"] {
+            background: var(--star-color);
+            border-color: var(--star-color);
+            color: #000;
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
+        }
+
+        .tab-btn.active[data-tab="delta"] {
+            background: var(--delta-color);
+            border-color: var(--delta-color);
+            color: #000;
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+        }
+
+        .tab-btn.active[data-tab="compare"] {
+            background: var(--comp-color);
+            border-color: var(--comp-color);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .tab-btn.active[data-tab="calc"] {
+            background: var(--calc-color);
+            border-color: var(--calc-color);
+            color: #000;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .card.star-theme::before {
+            background: var(--star-color);
+        }
+
+        .card.delta-theme::before {
+            background: var(--delta-color);
+        }
+
+        .card.comp-theme::before {
+            background: var(--comp-color);
+        }
+
+        .card.calc-theme::before {
+            background: var(--calc-color);
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.2rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .star-theme h2 {
+            color: var(--star-color);
+        }
+
+        .delta-theme h2 {
+            color: var(--delta-color);
+        }
+
+        .comp-theme h2 {
+            color: var(--comp-color);
+        }
+
+        .calc-theme h2 {
+            color: var(--calc-color);
+        }
+
+        .card p {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .formula-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .star-theme .formula-box {
+            border-left: 3px solid var(--star-color);
+        }
+
+        .delta-theme .formula-box {
+            border-left: 3px solid var(--delta-color);
+        }
+
+        .formula-box .label {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.8rem;
+        }
+
+        .formula-box .eq {
+            font-size: 1.2rem;
+            color: var(--text-main);
+        }
+
+        .highlight-star {
+            color: var(--star-color);
+            font-weight: bold;
+        }
+
+        .highlight-delta {
+            color: var(--delta-color);
+            font-weight: bold;
+        }
+
+        .svg-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+        }
+
+        .svg-container svg {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.05));
+        }
+
+        /* Steps */
+        .step {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .step-num {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+            opacity: 0.8;
+        }
+
+        .star-theme .step-num {
+            color: var(--star-color);
+        }
+
+        .delta-theme .step-num {
+            color: var(--delta-color);
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        /* Calculator */
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .input-group label {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .input-group input,
+        .input-group select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            padding: 1rem;
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--calc-color);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .results-panel {
+            margin-top: 3rem;
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(0, 0, 0, 0.2));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .result-item .label {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .result-item .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--calc-color);
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Table */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 2rem;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        th,
+        td {
+            padding: 1.2rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.4);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        th:nth-child(2) {
+            color: var(--star-color);
+        }
+
+        th:nth-child(3) {
+            color: var(--delta-color);
+        }
+
+        td {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        td:nth-child(2) {
+            color: rgba(14, 165, 233, 0.9);
+        }
+
+        td:nth-child(3) {
+            color: rgba(249, 115, 22, 0.9);
+        }
+
+        tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+        }
+
+        /* Alert/Tip boxes */
+        .tip {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            color: #bae6fd;
+        }
+
+        .tip.orange {
+            background: rgba(249, 115, 22, 0.1);
+            border-color: rgba(249, 115, 22, 0.2);
+            color: #fed7aa;
+        }
+
+        .tip-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pulse {
+            animation: nodePulse 2s infinite ease-in-out;
+        }
+
+        @keyframes nodePulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .dash-flow {
+            stroke-dasharray: 10 15;
+            animation: flow 1s linear infinite;
+        }
+
+        @keyframes flow {
+            to {
+                stroke-dashoffset: -25;
+            }
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 900px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem 1rem;
+            }
+
+            .tabs {
+                position: static;
+                gap: 0.5rem;
+                background: transparent;
+                border: none;
+                padding: 0;
+                box-shadow: none;
+            }
+
+            .tab-btn {
+                flex: 1 1 calc(50% - 0.5rem);
+                justify-content: center;
+                padding: 0.8rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            header h1 {
+                font-size: 2.2rem;
+            }
+
+            .step {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .result-item .value {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>STAR & DELTA Systems</h1>
+            <p>Interactive Guide to Three-Phase Electrical Connections</p>
+        </header>
+
+        <div class="tabs glass">
+            <button class="tab-btn active" data-tab="star">⭐ Star (Y)</button>
+            <button class="tab-btn" data-tab="delta">△ Delta (Δ)</button>
+            <button class="tab-btn" data-tab="compare">⚖️ Compare</button>
+            <button class="tab-btn" data-tab="calc">🧮 Calculator</button>
+        </div>
+
+        <!-- STAR SECTION -->
+        <div id="star" class="section active">
+            <div class="grid-2">
+                <div class="card glass star-theme">
+                    <h2>What is Star Connection?</h2>
+                    <p>In a Star (or Y) connection, one end of each of the three phase windings is connected together at
+                        a common point called the <strong>Neutral Point (N)</strong>. The other ends are connected to
+                        the three line wires (R, Y, B).</p>
+                    <p>This setup allows for two different voltage levels: Phase Voltage (between line and neutral) and
+                        Line Voltage (between any two lines).</p>
+
+                    <div class="tip">
+                        <span class="tip-icon">💡</span>
+                        <div><strong>Common Use:</strong> Household distribution. The 230V in your wall socket is the
+                            Phase Voltage, while the 400V across lines is for heavy industrial use.</div>
+                    </div>
+
+                    <div class="formula-box">
+                        <div class="label">Key Relationships</div>
+                        <div class="eq">
+                            Line Voltage: V<sub>L</sub> = <span class="highlight-star">√3 × V<sub>ph</sub></span><br>
+                            Line Current: I<sub>L</sub> = <span class="highlight-star">I<sub>ph</sub></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass star-theme">
+                    <h2>Visual Diagram</h2>
+                    <div class="svg-container">
+                        <svg viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Glow -->
+                            <circle cx="180" cy="165" r="70" fill="rgba(14, 165, 233, 0.15)" filter="blur(10px)" />
+
+                            <!-- Lines -->
+                            <line x1="180" y1="160" x2="180" y2="40" stroke="#0ea5e9" stroke-width="3"
+                                stroke-linecap="round" />
+                            <line x1="180" y1="160" x2="76" y2="220" stroke="#0ea5e9" stroke-width="3"
+                                stroke-linecap="round" />
+                            <line x1="180" y1="160" x2="284" y2="220" stroke="#0ea5e9" stroke-width="3"
+                                stroke-linecap="round" />
+
+                            <!-- Flow animation -->
+                            <line x1="180" y1="160" x2="180" y2="40" stroke="#fff" stroke-width="3" class="dash-flow"
+                                opacity="0.5" />
+                            <line x1="180" y1="160" x2="76" y2="220" stroke="#fff" stroke-width="3" class="dash-flow"
+                                opacity="0.5" />
+                            <line x1="180" y1="160" x2="284" y2="220" stroke="#fff" stroke-width="3" class="dash-flow"
+                                opacity="0.5" />
+
+                            <!-- Impedances -->
+                            <rect x="168" y="80" width="24" height="44" rx="4" fill="#0f172a" stroke="#0ea5e9"
+                                stroke-width="2" />
+                            <rect x="115" y="172" width="24" height="44" rx="4" fill="#0f172a" stroke="#0ea5e9"
+                                stroke-width="2" transform="rotate(120 127 194)" />
+                            <rect x="221" y="172" width="24" height="44" rx="4" fill="#0f172a" stroke="#0ea5e9"
+                                stroke-width="2" transform="rotate(240 233 194)" />
+
+                            <!-- Nodes -->
+                            <circle cx="180" cy="160" r="8" fill="#0f172a" stroke="#0ea5e9" stroke-width="2"
+                                style="transform-origin: 180px 160px;" class="pulse" />
+                            <circle cx="180" cy="36" r="6" fill="#0ea5e9" />
+                            <circle cx="72" cy="222" r="6" fill="#0ea5e9" />
+                            <circle cx="288" cy="222" r="6" fill="#0ea5e9" />
+
+                            <!-- Neutral Wire -->
+                            <line x1="180" y1="168" x2="180" y2="280" stroke="#64748b" stroke-width="2"
+                                stroke-dasharray="5 5" />
+                            <text x="190" y="270" font-family="'JetBrains Mono', monospace" font-size="12"
+                                fill="#64748b">Neutral (N)</text>
+
+                            <!-- Labels -->
+                            <text x="180" y="20" text-anchor="middle" font-family="'Outfit', sans-serif"
+                                font-weight="bold" fill="#0ea5e9">R</text>
+                            <text x="56" y="236" text-anchor="middle" font-family="'Outfit', sans-serif"
+                                font-weight="bold" fill="#0ea5e9">Y</text>
+                            <text x="304" y="236" text-anchor="middle" font-family="'Outfit', sans-serif"
+                                font-weight="bold" fill="#0ea5e9">B</text>
+                            <text x="168" y="106" font-family="'JetBrains Mono', monospace" font-size="14"
+                                fill="#0ea5e9">Z</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card glass star-theme">
+                <h2>Derivation: Why V<sub>L</sub> = √3 × V<sub>ph</sub> ?</h2>
+
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>Phase Voltages</h4>
+                        <p>In a balanced system, the three phase voltages are equal in magnitude but separated by 120
+                            degrees.</p>
+                        <div class="formula-box">
+                            <div class="eq">
+                                V<sub>R</sub> = V<sub>ph</sub> ∠0°<br>
+                                V<sub>Y</sub> = V<sub>ph</sub> ∠−120°<br>
+                                V<sub>B</sub> = V<sub>ph</sub> ∠−240°
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>Vector Subtraction</h4>
+                        <p>Line voltage is the potential difference between two lines (e.g., V<sub>RY</sub>). By
+                            Kirchhoff's Voltage Law, going from Y to R through the neutral:</p>
+                        <div class="formula-box">
+                            <div class="eq">
+                                V<sub>RY</sub> = V<sub>R</sub> − V<sub>Y</sub> = V<sub>ph</sub> ∠0° − V<sub>ph</sub>
+                                ∠−120°
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>Trigonometric Expansion</h4>
+                        <p>Using rectangular coordinates (cos θ + j sin θ):</p>
+                        <div class="formula-box">
+                            <div class="eq">
+                                V<sub>RY</sub> = V<sub>ph</sub>[1 - (-0.5 - j0.866)]<br>
+                                V<sub>RY</sub> = V<sub>ph</sub>(1.5 + j0.866)
+                            </div>
+                        </div>
+                        <p>Magnitude |V<sub>RY</sub>| = V<sub>ph</sub> × √(1.5² + 0.866²) = V<sub>ph</sub> × √(2.25 +
+                            0.75) = V<sub>ph</sub> × √3.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DELTA SECTION -->
+        <div id="delta" class="section">
+            <div class="grid-2">
+                <div class="card glass delta-theme">
+                    <h2>What is Delta Connection?</h2>
+                    <p>In a Delta (or Δ) connection, the end of one phase winding connects to the start of the next,
+                        forming a closed triangle loop. The line wires connect at the three corners.</p>
+                    <p>There is <strong>no neutral wire</strong> in this setup. The voltage across any winding is
+                        directly equal to the voltage between the two lines connected to it.</p>
+
+                    <div class="tip orange">
+                        <span class="tip-icon">🔥</span>
+                        <div><strong>Common Use:</strong> High-power industrial motors and power transmission, where
+                            high current and starting torque are essential.</div>
+                    </div>
+
+                    <div class="formula-box">
+                        <div class="label">Key Relationships</div>
+                        <div class="eq">
+                            Line Voltage: V<sub>L</sub> = <span class="highlight-delta">V<sub>ph</sub></span><br>
+                            Line Current: I<sub>L</sub> = <span class="highlight-delta">√3 × I<sub>ph</sub></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass delta-theme">
+                    <h2>Visual Diagram</h2>
+                    <div class="svg-container">
+                        <svg viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Glow -->
+                            <polygon points="180,40 60,250 300,250" fill="rgba(249, 115, 22, 0.1)"
+                                filter="blur(10px)" />
+
+                            <!-- Lines -->
+                            <line x1="180" y1="44" x2="64" y2="251" stroke="#f97316" stroke-width="3" />
+                            <line x1="64" y1="251" x2="296" y2="251" stroke="#f97316" stroke-width="3" />
+                            <line x1="296" y1="251" x2="180" y2="44" stroke="#f97316" stroke-width="3" />
+
+                            <!-- Flow animation -->
+                            <line x1="180" y1="44" x2="64" y2="251" stroke="#fff" stroke-width="3" class="dash-flow"
+                                opacity="0.5" />
+                            <line x1="64" y1="251" x2="296" y2="251" stroke="#fff" stroke-width="3" class="dash-flow"
+                                opacity="0.5" />
+                            <line x1="296" y1="251" x2="180" y2="44" stroke="#fff" stroke-width="3" class="dash-flow"
+                                opacity="0.5" />
+
+                            <!-- Impedances -->
+                            <rect x="110" y="125" width="24" height="44" rx="4" fill="#0f172a" stroke="#f97316"
+                                stroke-width="2" transform="rotate(-60 122 147)" />
+                            <rect x="168" y="229" width="24" height="44" rx="4" fill="#0f172a" stroke="#f97316"
+                                stroke-width="2" transform="rotate(-90 180 251)" />
+                            <rect x="226" y="125" width="24" height="44" rx="4" fill="#0f172a" stroke="#f97316"
+                                stroke-width="2" transform="rotate(60 238 147)" />
+
+                            <!-- Nodes -->
+                            <circle cx="180" cy="40" r="8" fill="#0f172a" stroke="#f97316" stroke-width="2"
+                                style="transform-origin: 180px 40px;" class="pulse" />
+                            <circle cx="60" cy="255" r="8" fill="#0f172a" stroke="#f97316" stroke-width="2"
+                                style="transform-origin: 60px 255px;" class="pulse" />
+                            <circle cx="300" cy="255" r="8" fill="#0f172a" stroke="#f97316" stroke-width="2"
+                                style="transform-origin: 300px 255px;" class="pulse" />
+
+                            <!-- Labels -->
+                            <text x="180" y="20" text-anchor="middle" font-family="'Outfit', sans-serif"
+                                font-weight="bold" fill="#f97316">R</text>
+                            <text x="40" y="275" text-anchor="middle" font-family="'Outfit', sans-serif"
+                                font-weight="bold" fill="#f97316">Y</text>
+                            <text x="320" y="275" text-anchor="middle" font-family="'Outfit', sans-serif"
+                                font-weight="bold" fill="#f97316">B</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card glass delta-theme">
+                <h2>Derivation: Why I<sub>L</sub> = √3 × I<sub>ph</sub> ?</h2>
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>Kirchhoff's Current Law (KCL)</h4>
+                        <p>At any node (corner of the delta), the current entering from the line must equal the
+                            difference between the phase currents connecting to that node.</p>
+                        <div class="formula-box">
+                            <div class="eq">
+                                I<sub>Line(R)</sub> = I<sub>RY</sub> − I<sub>BR</sub>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>Phase Currents Vector</h4>
+                        <p>The phase currents inside the delta are separated by 120°.</p>
+                        <div class="formula-box">
+                            <div class="eq">
+                                I<sub>RY</sub> = I<sub>ph</sub> ∠0°<br>
+                                I<sub>BR</sub> = I<sub>ph</sub> ∠−240° (or +120°)
+                            </div>
+                        </div>
+                        <p>Subtracting them gives |I<sub>Line</sub>| = √3 × I<sub>ph</sub> (by the same vector math
+                            shown in the Star voltage derivation).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPARE SECTION -->
+        <div id="compare" class="section">
+            <div class="card glass comp-theme">
+                <h2>Head-to-Head Comparison</h2>
+                <p>A quick reference table summarizing the key differences between Star and Delta configurations.</p>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>⭐ Star (Y)</th>
+                                <th>△ Delta (Δ)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Line Voltage (V<sub>L</sub>)</td>
+                                <td>√3 × V<sub>ph</sub></td>
+                                <td>= V<sub>ph</sub></td>
+                            </tr>
+                            <tr>
+                                <td>Line Current (I<sub>L</sub>)</td>
+                                <td>= I<sub>ph</sub></td>
+                                <td>√3 × I<sub>ph</sub></td>
+                            </tr>
+                            <tr>
+                                <td>Neutral Wire</td>
+                                <td>✅ Available</td>
+                                <td>❌ Not available</td>
+                            </tr>
+                            <tr>
+                                <td>Phase Voltage</td>
+                                <td>Lower (V<sub>L</sub> / √3)</td>
+                                <td>Higher (= V<sub>L</sub>)</td>
+                            </tr>
+                            <tr>
+                                <td>Total Power</td>
+                                <td colspan="2" style="text-align:center; color:#22c55e; font-weight:bold;">Same! P = √3
+                                    · V<sub>L</sub> · I<sub>L</sub> · cosφ</td>
+                            </tr>
+                            <tr>
+                                <td>Insulation Requirement</td>
+                                <td>Less (due to lower V<sub>ph</sub>)</td>
+                                <td>More (due to higher V<sub>ph</sub>)</td>
+                            </tr>
+                            <tr>
+                                <td>Common Uses</td>
+                                <td>Distribution, Lighting, Homes</td>
+                                <td>Motors, High-Power Transformers</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card glass comp-theme">
+                    <h2>Analogy: Star</h2>
+                    <div class="tip">
+                        <span class="tip-icon">🚲</span>
+                        <div>Like a bicycle wheel: all spokes (phases) meet at a central hub (neutral). You can measure
+                            from any spoke to the hub independently.</div>
+                    </div>
+                </div>
+                <div class="card glass comp-theme">
+                    <h2>Analogy: Delta</h2>
+                    <div class="tip orange">
+                        <span class="tip-icon">🔺</span>
+                        <div>Like a triangular pipe loop: flow continuously moves corner to corner. Great for pushing
+                            heavy loads without needing a center drain.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALCULATOR SECTION -->
+        <div id="calc" class="section">
+            <div class="card glass calc-theme">
+                <h2>3-Phase Power Calculator</h2>
+                <p>Enter your phase values below to instantly calculate line values and total active power.</p>
+
+                <div class="calc-grid">
+                    <div class="input-group">
+                        <label>Connection Type</label>
+                        <select id="calc-type">
+                            <option value="star">⭐ Star (Y)</option>
+                            <option value="delta">△ Delta (Δ)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Phase Voltage (Vph) - Volts</label>
+                        <input type="number" id="calc-vph" value="230" step="1" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Phase Current (Iph) - Amps</label>
+                        <input type="number" id="calc-iph" value="10" step="0.1" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Power Factor (cos φ)</label>
+                        <input type="number" id="calc-pf" value="0.8" step="0.01" min="0" max="1">
+                    </div>
+                </div>
+
+                <div class="results-panel">
+                    <div class="result-item">
+                        <span class="label">Line Voltage (V<sub>L</sub>)</span>
+                        <span class="value" id="res-vl">-- V</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Line Current (I<sub>L</sub>)</span>
+                        <span class="value" id="res-il">-- A</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Total Active Power (P)</span>
+                        <span class="value" id="res-p">-- kW</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Tab Navigation
+        const tabs = document.querySelectorAll('.tab-btn');
+        const sections = document.querySelectorAll('.section');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all
+                tabs.forEach(t => t.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+
+                // Add active class to clicked
+                tab.classList.add('active');
+                const target = tab.getAttribute('data-tab');
+                document.getElementById(target).classList.add('active');
+
+                // Re-trigger animations by cloning and replacing
+                const section = document.getElementById(target);
+                section.style.animation = 'none';
+                section.offsetHeight; // trigger reflow
+                section.style.animation = null;
+            });
+        });
+
+        // Calculator Logic
+        function calculate() {
+            const type = document.getElementById('calc-type').value;
+            const vph = parseFloat(document.getElementById('calc-vph').value) || 0;
+            const iph = parseFloat(document.getElementById('calc-iph').value) || 0;
+            const pf = parseFloat(document.getElementById('calc-pf').value) || 0;
+
+            let vl = 0, il = 0;
+
+            if (type === 'star') {
+                vl = vph * Math.sqrt(3);
+                il = iph;
+            } else {
+                vl = vph;
+                il = iph * Math.sqrt(3);
+            }
+
+            const power = 3 * vph * iph * pf; // in Watts
+
+            document.getElementById('res-vl').innerHTML = `${vl.toFixed(1)} <span style="font-size: 1rem;">V</span>`;
+            document.getElementById('res-il').innerHTML = `${il.toFixed(1)} <span style="font-size: 1rem;">A</span>`;
+            document.getElementById('res-p').innerHTML = `${(power / 1000).toFixed(2)} <span style="font-size: 1rem;">kW</span>`;
+        }
+
+        // Attach listeners
+        ['calc-type', 'calc-vph', 'calc-iph', 'calc-pf'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calculate);
+        });
+
+        // Initial calculation
+        calculate();
+    </script>
+
+</body>
+
+</html>
